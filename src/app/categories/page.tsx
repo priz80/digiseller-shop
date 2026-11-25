@@ -1,19 +1,29 @@
-import Image from "next/image";
-import Link from "next/link";
-import { getCatalog } from "@/lib/catalog";
+import { getProducts } from "@/lib/productlist";
 
-interface Category {
-  id: number;
-  name: string;
-}
+export const instant = false;
 
-export default async function Page() {
-  const categories = await getCatalog();
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoryId?: string | string[] }>;
+}) {
+  const value = (await searchParams).categoryId;
+  const categoryId = Array.isArray(value) ? value[0] : value;
 
-  if (!categories || categories.length === 0) {
+  if (!categoryId) {
     return (
       <main>
-        <h1>Категории не найдены</h1>
+        <h1>Укажите категорию</h1>
+      </main>
+    );
+  }
+
+  const products = await getProducts(categoryId);
+
+  if (products.length === 0) {
+    return (
+      <main>
+        <h1>В категории нет товаров</h1>
       </main>
     );
   }
@@ -21,17 +31,9 @@ export default async function Page() {
   return (
     <main>
       <div className="catalog-categories">
-        {categories.map((category: Category) => (
-          <div key={category.id} className="card-categories">
-            <Image
-              src="/img/ChatGPT-Logo.jpg"
-              alt="Logo"
-              width={180}
-              height={180}
-            />
-            <Link href="/">
-              <h2>{category.name}</h2>
-            </Link>
+        {products.map((product) => (
+          <div key={product.id} className="card-categories">
+            <p>{product.name}</p>
           </div>
         ))}
       </div>

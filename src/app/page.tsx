@@ -1,11 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCatalog } from "@/lib/catalog";
+import { getCatalog, type Category } from "@/lib/categories";
 
-interface Category {
-  id: number;
-  name: string;
-}
+export const instant = false;
 
 export default async function Page() {
   const categories = await getCatalog();
@@ -29,7 +26,7 @@ export default async function Page() {
               width={180}
               height={180}
             />
-            <Link href="/">
+            <Link href={`/categories?categoryId=${category.id}`}>
               <h2>{category.name}</h2>
             </Link>
           </div>
