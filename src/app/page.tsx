@@ -20,12 +20,14 @@ export default async function Page() {
       <div className="catalog-categories">
         {categories.map((category: Category) => (
           <div key={category.id} className="card-categories">
-            <Image
-              src="/img/ChatGPT-Logo.jpg"
-              alt="Logo"
-              width={180}
-              height={180}
-            />
+            <Link href={`/categories?categoryId=${category.id}`}>
+              <Image
+                src="/img/ChatGPT-Logo.jpg"
+                alt="Logo"
+                width={180}
+                height={180}
+              />
+            </Link>
             <Link href={`/categories?categoryId=${category.id}`}>
               <h2>{category.name}</h2>
             </Link>
