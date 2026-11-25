@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getProducts } from "@/lib/productlist";
 
 export const instant = false;
@@ -33,7 +34,15 @@ export default async function Page({
       <div className="catalog-categories">
         {products.map((product) => (
           <div key={product.id} className="card-categories">
-            <p>{product.name}</p>
+
+              <Image
+                src="/img/ChatGPT-Logo.jpg"
+                alt="Logo"
+                width={180}
+                height={180}
+              />
+
+            <div>{product.name}</div>
           </div>
         ))}
       </div>
