@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 73">
+  <!-- Logo D with background (full height, no left margin) -->
+  <g transform="translate(0, 0)">
+    <rect width="73" height="73" rx="8" fill="#172554" />
+    <g transform="scale(0.142578125)">
+      <path d="M128 157h159c75 0 119 39 119 99s-44 99-119 99H128V157Zm68 57v84h87c34 0 53-15 53-42s-19-42-53-42h-87Z" fill="#fff" />
+      <path d="M350 185c-18-20-45-31-77-31-48 0-79 24-79 62 0 36 25 52 75 63 32 7 42 13 42 25 0 13-12 20-31 20-26 0-48-10-67-29l-39 43c26 27 64 41 107 41 51 0 84-25 84-66 0-38-24-54-77-66-31-7-40-12-40-23 0-10 10-17 27-17 20 0 39 7 56 21l19-43Z" fill="#38bdf8" />
+    </g>
+  </g>
+  
+  <!-- Text: МАГАЗИН (centered vertically, 1.5x * 1.1 = 1.65x) -->
+  <text x="80" y="36" fill="#000000" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="bold" font-style="italic">МАГАЗИН</text>
+  
+  <!-- Text: моментальных покупок (bottom aligned, italic, lighter) -->
+  <text x="80" y="65" fill="#000000" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="normal" font-style="italic">моментальных покупок</text>
+</svg>
