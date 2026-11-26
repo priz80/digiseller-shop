@@ -27,13 +27,18 @@ jobs:
           DIGISELLER_BASE_PRICE: ${{ secrets.DIGISELLER_BASE_PRICE }}
           DIGISELLER_IN_STOCK: ${{ secrets.DIGISELLER_IN_STOCK }}
 
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
       - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          key_passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          key_path: ~/.ssh/deploy_key
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /var/www/digital_stor_usr/data/www/digital-store.online
