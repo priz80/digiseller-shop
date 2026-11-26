@@ -28,12 +28,14 @@ jobs:
           DIGISELLER_IN_STOCK: ${{ secrets.DIGISELLER_IN_STOCK }}
 
       - name: Deploy
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "./*"
-          target: "/var/www/digital_stor_usr/data/www/digital-store.online"
-          strip_components: 1
+          script: |
+            mkdir -p /var/www/digital_stor_usr/data/www/digital-store.online
+            cd /tmp
+            git clone https://github.com/${{ github.repository }}.git repo
+            rsync -avz --delete repo/ /var/www/digital_stor_usr/data/www/digital-store.online/
