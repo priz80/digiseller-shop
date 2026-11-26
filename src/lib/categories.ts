@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchDigiseller } from "@/lib/digiseller";
 
 export interface Category {
@@ -9,7 +10,7 @@ interface CategoriesResponse {
   category?: Category[];
 }
 
-export async function getCatalog(): Promise<Category[]> {
+export const getCatalog = cache(async (): Promise<Category[]> => {
   const data = await fetchDigiseller<CategoriesResponse>("/categories");
   return Array.isArray(data.category) ? data.category : [];
-}
+});

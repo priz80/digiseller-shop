@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="180" height="180" fill="url(#bg)" rx="16"/>
+  
+  <!-- OpenAI (top-left) -->
+  <g transform="translate(10, 10)">
+    <rect width="48" height="48" rx="8" fill="#10a379"/>
+    <text x="24" y="32" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="12" font-weight="bold">O</text>
+  </g>
+  
+  <!-- Google (top-center) -->
+  <g transform="translate(66, 10)">
+    <rect width="48" height="48" rx="8" fill="#ffffff"/>
+    <circle cx="20" cy="24" r="5" fill="#4285f4"/>
+    <circle cx="30" cy="24" r="5" fill="#ea4335"/>
+    <circle cx="25" cy="18" r="5" fill="#fbbc05"/>
+    <circle cx="25" cy="30" r="5" fill="#34a853"/>
+  </g>
+  
+  <!-- Meta AI (top-right) -->
+  <g transform="translate(122, 10)">
+    <rect width="48" height="48" rx="8" fill="#0668E1"/>
+    <text x="24" y="32" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="14" font-weight="bold">M</text>
+  </g>
+  
+  <!-- NVIDIA (center-left) -->
+  <g transform="translate(10, 66)">
+    <rect width="48" height="48" rx="8" fill="#76b900"/>
+    <polygon points="24,14 34,34 14,34" fill="white"/>
+  </g>
+  
+  <!-- Central AI (center) -->
+  <g transform="translate(66, 66)">
+    <rect width="48" height="48" rx="8" fill="#6c5ce7"/>
+    <text x="24" y="32" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="16" font-weight="bold">AI</text>
+  </g>
+  
+  <!-- Microsoft (center-right) -->
+  <g transform="translate(122, 66)">
+    <rect width="48" height="48" rx="8" fill="#f25022"/>
+    <rect x="16" y="16" width="8" height="8" fill="#7fba00"/>
+    <rect x="26" y="16" width="8" height="8" fill="#00a4ef"/>
+    <rect x="16" y="26" width="8" height="8" fill="#ffb900"/>
+    <rect x="26" y="26" width="8" height="8" fill="#f25022"/>
+  </g>
+  
+  <!-- Anthropic (bottom-left) -->
+  <g transform="translate(10, 122)">
+    <rect width="48" height="48" rx="8" fill="#2d2d2d"/>
+    <text x="24" y="32" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="14" font-weight="bold">A</text>
+  </g>
+  
+  <!-- Stability AI (bottom-center) -->
+  <g transform="translate(66, 122)">
+    <rect width="48" height="48" rx="8" fill="#f0e641"/>
+    <polygon points="24,16 27,24 36,24 29,29 31,37 24,32 17,37 19,29 12,24 21,24" fill="#2d2d2d"/>
+  </g>
+  
+  <!-- Baidu (bottom-right) -->
+  <g transform="translate(122, 122)">
+    <rect width="48" height="48" rx="8" fill="#2931e0"/>
+    <circle cx="24" cy="24" r="10" fill="white"/>
+    <circle cx="24" cy="24" r="5" fill="#2931e0"/>
+  </g>
+</svg>

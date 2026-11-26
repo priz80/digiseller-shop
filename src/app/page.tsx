@@ -10,20 +10,22 @@ export default async function Page() {
   if (!categories || categories.length === 0) {
     return (
       <main>
-        <h1>Категории не найдены</h1>
+        <h1>Категории цифровых товаров</h1>
+        <p>Категории временно недоступны</p>
       </main>
     );
   }
 
   return (
     <main>
+      <h1>Каталог цифровых товаров</h1>
       <div className="catalog-categories">
         {categories.map((category: Category) => (
           <div key={category.id} className="card-categories">
             <Link href={`/categories?categoryId=${category.id}`}>
               <Image
-                src="/img/ChatGPT-Logo.jpg"
-                alt="Logo"
+                src="/img/ai.png"
+                alt={`Категория цифровых товаров: ${category.name}`}
                 width={180}
                 height={180}
               />

@@ -1,12 +1,28 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { getCatalog, type Category } from "@/lib/categories";
 
-export default function Menu() {
+export const instant = false;
+
+export default async function MenuItems() {
+  const categories = await getCatalog();
+
+  if (!categories || categories.length === 0) {
+    return (
+      <main>
+        <h1>Категории не найдены</h1>
+      </main>
+    );
+  }
   return (
-    <nav className='nav-menu'>
+    <nav className="nav-menu">
       <ul>
-        <li><Link href="/">Home</Link></li>
-        <li><Link href="/about">About</Link></li>
-        <li><Link href="/contact">Contact</Link></li>
+        {categories.map((category: Category) => (
+          <li key={category.id}>
+            <Link href={`/categories?categoryId=${category.id}`}>
+              <h3>{category.name}</h3>
+            </Link>
+          </li>
+        ))}
       </ul>
     </nav>
   );

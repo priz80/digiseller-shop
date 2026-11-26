@@ -1,6 +1,8 @@
 const apiBaseUrl = "https://api.digiseller.com/api";
 
 export async function fetchDigiseller<T>(path: string): Promise<T> {
+  "use cache";
+
   const sellerId = process.env.DIGISELLER_AGENT_ID;
   if (!sellerId) {
     throw new Error("DIGISELLER_AGENT_ID not set");
