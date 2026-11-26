@@ -72,8 +72,10 @@ jobs:
             if command -v pm2 >/dev/null 2>&1; then
               pm2 delete digital-store >/dev/null 2>&1 || true
               pm2 delete digiseller-shop >/dev/null 2>&1 || true
-              PORT=3000 pm2 start npm --name digiseller-shop -- start
+              PORT=3001 pm2 start npm --name digiseller-shop -- start
               pm2 save
+              curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 http://127.0.0.1:3001/ >/dev/null
             else
-              PORT=3000 nohup npm run start >/tmp/digiseller-shop.log 2>&1 &
+              PORT=3001 nohup npm run start >/tmp/digiseller-shop.log 2>&1 &
+              curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 http://127.0.0.1:3001/ >/dev/null
             fi
