@@ -1,0 +1,38 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          DIGISELLER_AGENT_ID: ${{ secrets.DIGISELLER_AGENT_ID }}
+          DIGISELLER_BASE_PRICE: ${{ secrets.DIGISELLER_BASE_PRICE }}
+          DIGISELLER_IN_STOCK: ${{ secrets.DIGISELLER_IN_STOCK }}
+
+      - name: Deploy
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "./*"
+          target: "/var/www/digital_stor_usr/data/www/digital-store.online"
+          strip_components: 1
