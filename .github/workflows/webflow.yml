@@ -33,6 +33,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           source: "./*"
           target: "/var/www/digital_stor_usr/data/www/digital-store.online"
           strip_components: 1
