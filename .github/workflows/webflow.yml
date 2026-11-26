@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,22 +24,46 @@ jobs:
         run: npm run build
         env:
           DIGISELLER_AGENT_ID: ${{ secrets.DIGISELLER_AGENT_ID }}
-          DIGISELLER_BASE_PRICE: ${{ secrets.DIGISELLER_BASE_PRICE }}
-          DIGISELLER_IN_STOCK: ${{ secrets.DIGISELLER_IN_STOCK }}
+          NEXT_PUBLIC_YM_ID: ${{ secrets.NEXT_PUBLIC_YM_ID }}
 
-      - name: Write SSH key
+      - name: Validate deployment secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          DEPLOY_USERNAME: ${{ secrets.USERNAME }}
+          DEPLOY_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_KEY: ${{ secrets.SSH_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          test -n "$DEPLOY_HOST" || (echo "Missing GitHub secret: HOST" && exit 1)
+          test -n "$DEPLOY_USERNAME" || (echo "Missing GitHub secret: USERNAME" && exit 1)
+          test -n "$DEPLOY_PORT" || (echo "Missing GitHub secret: SSH_PORT" && exit 1)
+          test -n "$DEPLOY_KEY" || (echo "Missing GitHub secret: SSH_KEY" && exit 1)
 
       - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key_path: ~/.ssh/deploy_key
+          key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          command_timeout: 20m
           script: |
+            set -e
             cd /var/www/digital_stor_usr/data/www/digital-store.online
-            git fetch origin && git reset --hard origin/main
+            git fetch origin
+            git reset --hard origin/main
+            npm ci
+            npm run build
+
+            if command -v pm2 >/dev/null 2>&1; then
+              if pm2 describe digital-store >/dev/null 2>&1; then
+                pm2 reload digital-store --update-env
+              elif pm2 describe digiseller-shop >/dev/null 2>&1; then
+                pm2 reload digiseller-shop --update-env
+              else
+                echo "PM2 is installed, but process names digital-store/digiseller-shop were not found"
+                exit 1
+              fi
+            else
+              echo "PM2 is not installed. Code and build were updated, but the running Next.js process was not restarted"
+            fi
