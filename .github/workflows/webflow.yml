@@ -44,40 +44,62 @@ jobs:
           DEPLOY_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
         run: |
           if [[ "$DEPLOY_KEY" == *\\n* ]]; then
-            printf '%b' "$DEPLOY_KEY" > /tmp/deploy_key
+            printf '%b' "$DEPLOY_KEY" > "$GITHUB_WORKSPACE/deploy_key"
           else
-            printf '%s' "$DEPLOY_KEY" > /tmp/deploy_key
+            printf '%s' "$DEPLOY_KEY" > "$GITHUB_WORKSPACE/deploy_key"
           fi
 
-          sed -i 's/\r$//' /tmp/deploy_key
-          printf '\n' >> /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
+          sed -i 's/\r$//' "$GITHUB_WORKSPACE/deploy_key"
+          printf '\n' >> "$GITHUB_WORKSPACE/deploy_key"
+          chmod 600 "$GITHUB_WORKSPACE/deploy_key"
 
-          if ! grep -q 'PRIVATE KEY' /tmp/deploy_key; then
+          if ! grep -q 'PRIVATE KEY' "$GITHUB_WORKSPACE/deploy_key"; then
             echo "SSH_KEY is not a private key. Store the private key, not the .pub/public key."
             exit 1
           fi
 
-          if ! ssh-keygen -y -P "$DEPLOY_PASSPHRASE" -f /tmp/deploy_key >/tmp/deploy_key.pub 2>/tmp/deploy_key.error; then
-            cat /tmp/deploy_key.error
+          if ! ssh-keygen -y -P "$DEPLOY_PASSPHRASE" -f "$GITHUB_WORKSPACE/deploy_key" > "$GITHUB_WORKSPACE/deploy_key.pub" 2>"$GITHUB_WORKSPACE/deploy_key.error"; then
+            cat "$GITHUB_WORKSPACE/deploy_key.error"
             echo "SSH_KEY is invalid or protected by an unknown passphrase. Store SSH_PASSPHRASE if it is encrypted."
             exit 1
           fi
+
+          echo "SSH key fingerprint:"
+          ssh-keygen -lf "$GITHUB_WORKSPACE/deploy_key.pub" -E sha256
 
       - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key_path: /tmp/deploy_key
+          key_path: ${{ github.workspace }}/deploy_key
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           command_timeout: 20m
           script: |
             set -e
+
+            echo "Deploy SSH user: $(whoami)"
+            test -d ~/.ssh || (echo "~/.ssh is missing on the server" && exit 1)
+            test -f ~/.ssh/authorized_keys || (echo "~/.ssh/authorized_keys is missing on the server" && exit 1)
+
+            perms=$(stat -c '%a' ~/.ssh)
+            echo "~/.ssh mode: $perms"
+            echo "authorized_keys entries: $(grep -c '^ssh-' ~/.ssh/authorized_keys || true)"
+
             cd /var/www/digital_stor_usr/data/www/digital-store.online
-            git fetch origin
-            git reset --hard origin/main
+
+            if [ ! -d .git ]; then
+              echo "Git metadata is missing. Initializing repository from GitHub..."
+              git init
+              git remote add origin https://github.com/priz80/digiseller-shop.git
+              git fetch --depth 1 origin main
+              git reset --hard FETCH_HEAD
+            else
+              git fetch origin
+              git reset --hard origin/main
+            fi
+
             npm ci
             npm run build
 
@@ -85,11 +107,12 @@ jobs:
               if pm2 describe digital-store >/dev/null 2>&1; then
                 pm2 reload digital-store --update-env
               elif pm2 describe digiseller-shop >/dev/null 2>&1; then
-                pm2 reload digiseller-shop --update-env
+                pm2 restart digiseller-shop
               else
-                echo "PM2 is installed, but process names digital-store/digiseller-shop were not found"
-                exit 1
+                pm2 start npm --name digital-store -- run start
               fi
             else
-              echo "PM2 is not installed. Code and build were updated, but the running Next.js process was not restarted"
+              npm run start
             fi
+
+            echo "Deployment completed successfully."
