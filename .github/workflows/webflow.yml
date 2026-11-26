@@ -70,9 +70,10 @@ jobs:
             npm run build
 
             if command -v pm2 >/dev/null 2>&1; then
+              pm2 delete digital-store >/dev/null 2>&1 || true
               pm2 delete digiseller-shop >/dev/null 2>&1 || true
-              pm2 start npm --name digiseller-shop -- run start
+              PORT=3000 pm2 start npm --name digiseller-shop -- start
               pm2 save
             else
-              nohup npm run start >/tmp/digiseller-shop.log 2>&1 &
+              PORT=3000 nohup npm run start >/tmp/digiseller-shop.log 2>&1 &
             fi
