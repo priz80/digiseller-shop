@@ -5,11 +5,12 @@ on:
     branches: [main]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -18,31 +19,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: |
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
-          npm config set fetch-timeout 300000
-
-          npm_ci_attempt=1
-          until npm ci --prefer-offline --no-audit --no-fund; do
-            if [ "$npm_ci_attempt" -ge 3 ]; then
-              echo "npm ci failed after 3 attempts"
-              exit 1
-            fi
-            npm_ci_attempt=$((npm_ci_attempt + 1))
-            echo "npm ci failed, retrying ($npm_ci_attempt/3)..."
-            rm -rf node_modules
-            npm cache verify >/dev/null 2>&1 || true
-            sleep 10
-          done
+        run: npm ci
 
       - name: Build
         run: npm run build
         env:
           DIGISELLER_AGENT_ID: ${{ secrets.DIGISELLER_AGENT_ID }}
           NEXT_PUBLIC_YM_ID: ${{ secrets.NEXT_PUBLIC_YM_ID }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Validate deployment secrets
         env:
@@ -51,107 +34,37 @@ jobs:
           DEPLOY_PORT: ${{ secrets.SSH_PORT }}
           DEPLOY_KEY: ${{ secrets.SSH_KEY }}
         run: |
-          test -n "$DEPLOY_HOST" || (echo "Missing GitHub secret: HOST" && exit 1)
-          test -n "$DEPLOY_USERNAME" || (echo "Missing GitHub secret: USERNAME" && exit 1)
-          test -n "$DEPLOY_PORT" || (echo "Missing GitHub secret: SSH_PORT" && exit 1)
-          test -n "$DEPLOY_KEY" || (echo "Missing GitHub secret: SSH_KEY" && exit 1)
-
-      - name: Validate SSH private key
-        env:
-          DEPLOY_KEY: ${{ secrets.SSH_KEY }}
-          DEPLOY_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
-        run: |
-          if [[ "$DEPLOY_KEY" == *\\n* ]]; then
-            printf '%b' "$DEPLOY_KEY" > "$GITHUB_WORKSPACE/deploy_key"
-          else
-            printf '%s' "$DEPLOY_KEY" > "$GITHUB_WORKSPACE/deploy_key"
-          fi
-
-          sed -i 's/\r$//' "$GITHUB_WORKSPACE/deploy_key"
-          printf '\n' >> "$GITHUB_WORKSPACE/deploy_key"
-          chmod 600 "$GITHUB_WORKSPACE/deploy_key"
-
-          if ! grep -q 'PRIVATE KEY' "$GITHUB_WORKSPACE/deploy_key"; then
-            echo "SSH_KEY is not a private key. Store the private key, not the .pub/public key."
-            exit 1
-          fi
-
-          if ! ssh-keygen -y -P "$DEPLOY_PASSPHRASE" -f "$GITHUB_WORKSPACE/deploy_key" > "$GITHUB_WORKSPACE/deploy_key.pub" 2>"$GITHUB_WORKSPACE/deploy_key.error"; then
-            cat "$GITHUB_WORKSPACE/deploy_key.error"
-            echo "SSH_KEY is invalid or protected by an unknown passphrase. Store SSH_PASSPHRASE if it is encrypted."
-            exit 1
-          fi
-
-          echo "SSH key fingerprint:"
-          ssh-keygen -lf "$GITHUB_WORKSPACE/deploy_key.pub" -E sha256
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USERNAME"
+          test -n "$DEPLOY_PORT"
+          test -n "$DEPLOY_KEY"
 
       - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key_path: ${{ github.workspace }}/deploy_key
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           command_timeout: 20m
           script: |
             set -e
-
-            echo "Deploy SSH user: $(whoami)"
-            test -d ~/.ssh || (echo "~/.ssh is missing on the server" && exit 1)
-            test -f ~/.ssh/authorized_keys || (echo "~/.ssh/authorized_keys is missing on the server" && exit 1)
-
-            perms=$(stat -c '%a' ~/.ssh)
-            echo "~/.ssh mode: $perms"
-            echo "authorized_keys entries: $(grep -c '^ssh-' ~/.ssh/authorized_keys || true)"
-
             cd /var/www/digital_stor_usr/data/www/digital-store.online
 
-            if [ ! -d .git ]; then
-              echo "Git metadata is missing. Initializing repository from GitHub..."
-              git init
-              git remote add origin https://github.com/priz80/digiseller-shop.git
-              git fetch --depth 1 origin main
-              git reset --hard FETCH_HEAD
-            else
-              git fetch origin
-              git reset --hard origin/main
-            fi
+            git fetch origin
+            git reset --hard origin/main
 
             export DIGISELLER_AGENT_ID="${{ secrets.DIGISELLER_AGENT_ID }}"
             export NEXT_PUBLIC_YM_ID="${{ secrets.NEXT_PUBLIC_YM_ID }}"
 
-            npm config set fetch-retries 5
-            npm config set fetch-retry-mintimeout 20000
-            npm config set fetch-retry-maxtimeout 120000
-            npm config set fetch-timeout 300000
-
-            npm_ci_attempt=1
-            until npm ci --prefer-offline --no-audit --no-fund; do
-              if [ "$npm_ci_attempt" -ge 3 ]; then
-                echo "npm ci failed after 3 attempts"
-                exit 1
-              fi
-              npm_ci_attempt=$((npm_ci_attempt + 1))
-              echo "npm ci failed, retrying ($npm_ci_attempt/3)..."
-              rm -rf node_modules
-              npm cache verify >/dev/null 2>&1 || true
-              sleep 10
-            done
-
+            npm ci
             npm run build
 
             if command -v pm2 >/dev/null 2>&1; then
-              if pm2 describe digital-store >/dev/null 2>&1; then
-                pm2 reload digital-store --update-env
-              elif pm2 describe digiseller-shop >/dev/null 2>&1; then
-                pm2 restart digiseller-shop
-              else
-                pm2 start npm --name digital-store -- run start
-              fi
+              pm2 delete digiseller-shop >/dev/null 2>&1 || true
+              pm2 start npm --name digiseller-shop -- run start
+              pm2 save
             else
-              npm run start
+              nohup npm run start >/tmp/digiseller-shop.log 2>&1 &
             fi
-
-            echo "Deployment completed successfully."
-            
