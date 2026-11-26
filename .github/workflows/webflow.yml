@@ -28,12 +28,13 @@ jobs:
           DIGISELLER_IN_STOCK: ${{ secrets.DIGISELLER_IN_STOCK }}
 
       - name: Deploy
-        uses: burnett01/rsync-deployments@v5
+        uses: appleboy/ssh-action@v1
         with:
-          switches: -avzr --delete
-          path: ./
-          remote_path: /var/www/digital_stor_usr/data/www/digital-store.online/
-          remote_host: ${{ secrets.HOST }}
-          remote_user: ${{ secrets.USERNAME }}
-          remote_key: ${{ secrets.SSH_KEY }}
-          remote_port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          key_passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /var/www/digital_stor_usr/data/www/digital-store.online
+            git fetch origin && git reset --hard origin/main
